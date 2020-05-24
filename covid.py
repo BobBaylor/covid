@@ -87,8 +87,8 @@ def show_country_stats(df, country_id):
     """the grim stats of the selected df """
     df3 = df[df['geoId'] == country_id]
     pop = df3.iloc[0]["popData2018"]
-    print(f'sum of cases:  {sum(df3["new cases"]):8,}  ({(100.0*sum(df3["new cases"])/pop):.2f}% of 2018 population)')
-    print(f'sum of deaths: {sum(df3["new deaths"]):8,}  ({(100.0*sum(df3["new deaths"])/pop):.2f}% of 2018 population)')
+    print(f'sum of cases:  {sum(df3["cases"]):8,}  ({(100.0*sum(df3["cases"])/pop):.2f}% of 2018 population)')
+    print(f'sum of deaths: {sum(df3["deaths"]):8,}  ({(100.0*sum(df3["deaths"])/pop):.2f}% of 2018 population)')
 
 
 def show_country_name(df, country_id):
@@ -212,8 +212,10 @@ def test(opts):
     df = df[['geoId',
              'countriesAndTerritories',
              "Date",
-             "new cases",
+             "new cases",       # 7 day running averages
              "new deaths",
+             "cases",           # actual dailies
+             "deaths",
              "total cases",
              "total deaths",
              "popData2018",
@@ -222,6 +224,8 @@ def test(opts):
     #if opts['--average']:    # rolling and exponentials both leave the most recent data too low
     #    df['new cases'] = df['new cases'].rolling(window=2).mean()
     #    df['new deaths'] = df['new deaths'].rolling(window=2).mean()
+    df['new cases'] = df['new cases'].rolling(window=7).sum().divide(7.0)
+    df['new deaths'] = df['new deaths'].rolling(window=7).sum().divide(7.0)
 
     # filter out small numbers of cases in a day
     df2 = df[df['new cases'] >= int(opts['--threshold'])]
