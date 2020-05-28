@@ -216,8 +216,10 @@ def test(opts):
     df = df[['geoId',
              'countriesAndTerritories',
              "Date",
-             "new cases",
+             "new cases",       # 7 day running averages
              "new deaths",
+             "cases",           # actual dailies
+             "deaths",
              "total cases",
              "total deaths",
              "popData2018",
@@ -226,6 +228,8 @@ def test(opts):
     #if opts['--average']:    # rolling and exponentials both leave the most recent data too low
     #    df['new cases'] = df['new cases'].rolling(window=2).mean()
     #    df['new deaths'] = df['new deaths'].rolling(window=2).mean()
+    df['new cases'] = df['new cases'].rolling(window=7).sum().divide(7.0)
+    df['new deaths'] = df['new deaths'].rolling(window=7).sum().divide(7.0)
 
     # filter out small numbers of cases in a day
     df2 = df[df['new cases'] >= int(opts['--threshold'])]
