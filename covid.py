@@ -87,8 +87,10 @@ def show_country_stats(df, country_id):
     """the grim stats of the selected df """
     df3 = df[df['geoId'] == country_id]
     pop = df3.iloc[0]["popData2018"]
-    print(f'sum of cases:  {sum(df3["new cases"]):8,}  ({(100.0*sum(df3["new cases"])/pop):.2f}% of 2018 population)')
-    print(f'sum of deaths: {sum(df3["new deaths"]):8,}  ({(100.0*sum(df3["new deaths"])/pop):.2f}% of 2018 population)')
+    d_cum = df3.iloc[-1]["total deaths"]
+    c_cum = df3.iloc[-1]["total cases"]
+    print(f'sum of cases:  {c_cum:8,}  ({(100.0*c_cum/pop):.2f}% of 2018 population)')
+    print(f'sum of deaths: {d_cum:8,}  ({(100.0*d_cum/pop):.2f}% of 2018 population)')
 
 
 def show_country_name(df, country_id):
@@ -206,6 +208,8 @@ def test(opts):
     df['total cases'] = df.groupby(['countriesAndTerritories'])['cases'].cumsum()
     df['new cases'] = df['cases']
     df['new deaths'] = df['deaths']
+    df['new cases'] = df['new cases'].rolling(window=7).sum()
+    df['new deaths'] = df['new deaths'].rolling(window=7).sum()
     max_date = df['Date'].max()
     print(f'Most recent date point is {max_date:%B %d, %Y at %H:%M %p}')
     # only keep what I care about
