@@ -206,10 +206,9 @@ def test(opts):
     df['Date'] = pd.to_datetime(df.dateRep, format='%d/%m/%Y')
     df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths'].cumsum()
     df['total cases'] = df.groupby(['countriesAndTerritories'])['cases'].cumsum()
-    df['new cases'] = df['cases']
-    df['new deaths'] = df['deaths']
-    df['new cases'] = df['new cases'].rolling(window=7).sum()
-    df['new deaths'] = df['new deaths'].rolling(window=7).sum()
+    df['new cases'] = df['cases'].rolling(window=7).sum().divide(7.0)
+    df['new deaths'] = df['deaths'].rolling(window=7).sum().divide(7.0)
+
     max_date = df['Date'].max()
     print(f'Most recent date point is {max_date:%B %d, %Y at %H:%M %p}')
     # only keep what I care about
@@ -224,12 +223,6 @@ def test(opts):
              "total deaths",
              "popData2018",
              ]]
-
-    #if opts['--average']:    # rolling and exponentials both leave the most recent data too low
-    #    df['new cases'] = df['new cases'].rolling(window=2).mean()
-    #    df['new deaths'] = df['new deaths'].rolling(window=2).mean()
-    df['new cases'] = df['new cases'].rolling(window=7).sum().divide(7.0)
-    df['new deaths'] = df['new deaths'].rolling(window=7).sum().divide(7.0)
 
     # filter out small numbers of cases in a day
     df2 = df[df['new cases'] >= int(opts['--threshold'])]
