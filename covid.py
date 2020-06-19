@@ -86,11 +86,11 @@ def show_all_country_codes(df):
 def show_country_stats(df, country_id):
     """the grim stats of the selected df """
     df3 = df[df['geoId'] == country_id]
-    pop = df3.iloc[0]["popData2018"]
+    pop = df3.iloc[0]["popData2019"]
     d_cum = df3.iloc[-1]["total deaths"]
     c_cum = df3.iloc[-1]["total cases"]
-    print(f'sum of cases:  {c_cum:8,}  ({(100.0*c_cum/pop):.2f}% of 2018 population)')
-    print(f'sum of deaths: {d_cum:8,}  ({(100.0*d_cum/pop):.2f}% of 2018 population)')
+    print(f'sum of cases:  {c_cum:8,}  ({(100.0*c_cum/pop):.2f}% of 2019 population)')
+    print(f'sum of deaths: {d_cum:8,}  ({(100.0*d_cum/pop):.2f}% of 2019 population)')
 
 
 def show_country_name(df, country_id):
@@ -221,7 +221,7 @@ def test(opts):
              "deaths",
              "total cases",
              "total deaths",
-             "popData2018",
+             "popData2019",
              ]]
 
     # filter out small numbers of cases in a day
