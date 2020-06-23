@@ -133,7 +133,7 @@ def plot_multi_countries(opts, df, countries):
 
     # groupby is magic.   https://realpython.com/pandas-groupby/
     for key, grp in df4.groupby(['geoId']):
-        ax.plot(grp['Date'], grp[y_col], label=key, linewidth=3)
+        ax.plot(grp['Date'], grp[y_col], label=key, linewidth=7)
 
     ax.legend()                                     # show the legend
     ax.set_yscale('log')                            # log y axis to see slope
