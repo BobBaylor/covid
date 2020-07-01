@@ -65,9 +65,12 @@ def show_all_country_codes(df):
 
     # how many columns fit on the screen?
     fmt_one = '%5s %-34s'             # each colum is this wide (40)
-    terminal_size = os.get_terminal_size()                  # returns a named tupple
-    col_count = terminal_size.columns // len(fmt_one%('', ''))  # divide screen by column width
-    col_length = int(ceil(len(ids_and_cntry)/col_count))        # so, this many columns
+    spacer = ' '                      # between columns
+    terminal_size = os.get_terminal_size()                  # returns a named tuple
+    # divide screen by column width to get the count of columns
+    #
+    col_count = terminal_size.columns// (len(spacer)+len(fmt_one%('', '')))
+    col_length = int(ceil(len(ids_and_cntry)/col_count))        # so, this many rows
     col_remainder = col_length * col_count - len(ids_and_cntry) # blank entries for last column
 
     # rearrange into a list of col_count lists
@@ -81,8 +84,7 @@ def show_all_country_codes(df):
     # now that the columns are all the same length, zip them into rows
     rows = list(zip(*cols))   # each row looks like [[id, cntry],[id, cntry],[id, cntry],]
     for row in rows:
-        print(' '.join([fmt_one%tuple(pair) for pair in row]))
-    # print(f'\nID count={len(ids_and_cntry)}, col_length={col_length}, rows={len(rows)}')
+        print(spacer.join([fmt_one%tuple(pair) for pair in row]))
 
 
 def show_country_stats(df, country_id):
