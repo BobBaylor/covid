@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
 USAGE_TEXT = """
  Usage:
-  covid  [--country=<C>] [--debug=<D>] [--threshold=<T>] [--get] [--lines] [--ids] [--plot] [--multi=<M>]
+  covid  [--country=<C>] [--debug=<D>] [--threshold=<T>] [--get] [--lines] [--ids] [--log] [--norm] [--plot] [--multi=<M>]
   covid -h | --help
   covid -v | --version
 
@@ -36,7 +36,9 @@ USAGE_TEXT = """
   -h --help               Show this screen.
   -i --ids                Show a list of the country geoIds.
   -l --lines              Show the data in tabular form.
+  -n --norm               Plot normalized to population
   -m --multi <M>          Multi all on one plot. c=cases, d=deaths. lower case for new, upper for totals.
+  -o --log                Use log Y scale
   -p --plot               Plot the data.
   -t --threshold <T>      min case count [default: 10].
   -v --version            show the version.
@@ -86,9 +88,9 @@ def show_all_country_codes(df):
 def show_country_stats(df, country_id):
     """the grim stats of the selected df """
     df3 = df[df['geoId'] == country_id]
-    pop = df3.iloc[0]["popData2019"]
-    d_cum = df3.iloc[-1]["total deaths"]
-    c_cum = df3.iloc[-1]["total cases"]
+    pop = df3.iloc[0]['popData2019']
+    d_cum = df3.iloc[-1]['total deaths']
+    c_cum = df3.iloc[-1]['total cases']
     print(f'sum of cases:  {c_cum:8,}  ({(100.0*c_cum/pop):.2f}% of 2019 population)')
     print(f'sum of deaths: {d_cum:8,}  ({(100.0*d_cum/pop):.2f}% of 2019 population)')
 
@@ -96,7 +98,7 @@ def show_country_stats(df, country_id):
 def show_country_name(df, country_id):
     """grab the name from the 1st entry of the selected df """
     df3 = df[df['geoId'] == country_id]
-    country_name = df3.iloc[0]["countriesAndTerritories"]
+    country_name = df3.iloc[0]['countriesAndTerritories']
     print(f'\n{country_id} ({country_name}):')
 
 
@@ -111,7 +113,7 @@ def display_one_country(opts, df, country):
         print(df3)
     show_country_stats(df3, country)
     if opts['--plot']:
-        plot_one_country(df3)
+        plot_one_country(opts, df3)
 
 
 def plot_multi_countries(opts, df, countries):
@@ -122,44 +124,52 @@ def plot_multi_countries(opts, df, countries):
         show_country_stats(df, country)
 
     df3 = df[df['geoId'].isin(countries.split(','))]
-    df4 = df3[["Date", "geoId", "new cases", "new deaths", "total cases", "total deaths"]]
-    y_col = {'c':'new cases',
-             'd':'new deaths',
+    df4 = df3[['Date', 'geoId', 'daily cases', 'daily deaths', 'total cases', 'total deaths', 'popData2019',]]
+
+    y_col = {'c':'daily cases',
+             'd':'daily deaths',
              'C':'total cases',
              'D':'total deaths'}[opts['--multi']]
-    title = f'{y_col} in {", ".join(countries.split(","))}'
+    norm_str = ' (% of pop)' if opts['--norm'] else ''
+    title = f'{y_col}{norm_str} in {", ".join(countries.split(","))}'
 
     fig, ax = plt.subplots(figsize=(8, 5))          # 8 wide by 4 tall seems good
 
     # groupby is magic.   https://realpython.com/pandas-groupby/
     for key, grp in df4.groupby(['geoId']):
-        ax.plot(grp['Date'], grp[y_col], label=key, linewidth=7)
+        y_norm = grp.iloc[0]['popData2019'] * 1e-2 if opts['--norm'] else 1.0
+        ax.plot(grp['Date'], grp[y_col]/y_norm, label=key, linewidth=7)
 
     ax.legend()                                     # show the legend
-    ax.set_yscale('log')                            # log y axis to see slope
+    if opts['--log']:
+        ax.set_yscale('log')                            # log y axis to see slope
+        plt.ylim(bottom=int(opts['--threshold'])//2)
+    else:
+        plt.autoscale()
+
     ax.set_title(title)
 
     ax.xaxis.set_minor_locator(mdates.DayLocator())  # every day x ticks
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))  # major x:Mondays
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d')) # x labels month/day
 
-    plt.ylim(bottom=int(opts['--threshold'])//2)
     plt.grid(which='major', axis='both')             # show both major axis
     plt.grid(which='minor', axis='y', ls='dotted')   # show y minor as dotted
     fig.autofmt_xdate()       # rotate, right align, and leave room for date labels
     plt.show()
 
 
-def plot_one_country(df):
+def plot_one_country(opts, df):
     """A simple plot of 1 country
        select just the columns I want to plot
     """
-    country_name = df.iloc[0]["countriesAndTerritories"]
+    country_name = df.iloc[0]['countriesAndTerritories']
 
-    df4 = df[["Date", "new cases", "new deaths", "total cases", "total deaths"]]
+    df4 = df[['Date', 'daily cases', 'daily deaths', 'total cases', 'total deaths']]
 
     fig, ax = plt.subplots(figsize=(8, 5))          # 8 wide by 4 tall seems good
-    ax.set_yscale('log')                            # log y axis to see slope
+    if opts['--log']:
+        ax.set_yscale('log')                            # log y axis to see slope
 
     ax.xaxis.set_minor_locator(mdates.DayLocator())  # every day x ticks
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))  # major x:Mondays
@@ -168,7 +178,7 @@ def plot_one_country(df):
     plt.grid(which='major', axis='both')             # show both major axis
     plt.grid(which='minor', axis='y', ls='dotted')   # show y minor as dotted
     fig.autofmt_xdate()       # rotate, right align, and leave room for date labels
-    df4.plot(x="Date", kind='line', grid=True, ax=ax, logy=True, title=country_name)
+    df4.plot(x='Date', kind='line', grid=True, ax=ax, logy=True, title=country_name)
     ax.legend()                                     # show the legend
     plt.show()
 
@@ -183,7 +193,7 @@ def test(opts):
     if opts['--get']:
         get_data()       # go ask the WHO server for a new csv and save it
 
-    df = pd.read_csv(DATA_FILE, encoding="ISO-8859-1")
+    df = pd.read_csv(DATA_FILE, encoding='ISO-8859-1')
     f_date = datetime.fromtimestamp(os.path.getmtime(DATA_FILE))
     print(f'Data was retrieved {f_date:%B %d, %Y at %H:%M %p}')
 
@@ -206,26 +216,26 @@ def test(opts):
     df['Date'] = pd.to_datetime(df.dateRep, format='%d/%m/%Y')
     df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths'].cumsum()
     df['total cases'] = df.groupby(['countriesAndTerritories'])['cases'].cumsum()
-    df['new cases'] = df['cases'].rolling(window=7).sum().divide(7.0)
-    df['new deaths'] = df['deaths'].rolling(window=7).sum().divide(7.0)
+    df['daily cases'] = df['cases'].rolling(window=7).sum().divide(7.0)
+    df['daily deaths'] = df['deaths'].rolling(window=7).sum().divide(7.0)
 
     max_date = df['Date'].max()
     print(f'Most recent date point is {max_date:%B %d, %Y at %H:%M %p}')
     # only keep what I care about
     df = df[['geoId',
              'countriesAndTerritories',
-             "Date",
-             "new cases",       # 7 day running averages
-             "new deaths",
-             "cases",           # actual dailies
-             "deaths",
-             "total cases",
-             "total deaths",
-             "popData2019",
+             'Date',
+             'daily cases',       # 7 day running averages
+             'daily deaths',
+             'cases',           # actual dailies
+             'deaths',
+             'total cases',
+             'total deaths',
+             'popData2019',
              ]]
 
     # filter out small numbers of cases in a day
-    df2 = df[df['new cases'] >= int(opts['--threshold'])]
+    df2 = df[df['daily cases'] >= int(opts['--threshold'])]
 
     plt.close('all')
     countries = opts['--country'].upper()
