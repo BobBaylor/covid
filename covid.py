@@ -126,7 +126,13 @@ def plot_multi_countries(opts, df, countries):
         show_country_stats(df, country)
 
     df3 = df[df['geoId'].isin(countries.split(','))]
-    df4 = df3[['Date', 'geoId', 'daily cases', 'daily deaths', 'total cases', 'total deaths', 'popData2019',]]
+    df4 = df3[['Date',
+               'geoId',
+               'daily cases',
+               'daily deaths',
+               'total cases',
+               'total deaths',
+               'popData2019',]]
 
     y_col = {'c':'daily cases',
              'd':'daily deaths',
@@ -165,7 +171,7 @@ def plot_one_country(opts, df):
     """A simple plot of 1 country
        select just the columns I want to plot
     """
-    country_name = df.iloc[0]['countriesAndTerritories']
+    title = df.iloc[0]['countriesAndTerritories']
 
     df4 = df[['Date', 'daily cases', 'daily deaths', 'total cases', 'total deaths']]
 
@@ -180,7 +186,13 @@ def plot_one_country(opts, df):
     plt.grid(which='major', axis='both')             # show both major axis
     plt.grid(which='minor', axis='y', ls='dotted')   # show y minor as dotted
     fig.autofmt_xdate()       # rotate, right align, and leave room for date labels
-    df4.plot(x='Date', kind='line', grid=True, ax=ax, logy=True, title=country_name)
+    df4.plot(x='Date',
+             kind='line',
+             grid=True,
+             ax=ax,
+             logy=opts['--log'],
+             title=title,
+             linewidth=7,)
     ax.legend()                                     # show the legend
     plt.show()
 
