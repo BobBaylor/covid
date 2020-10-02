@@ -162,9 +162,9 @@ def plot_multi_countries(opts, df, countries):
 
     ax.set_title(title)
 
-    ax.xaxis.set_minor_locator(mdates.DayLocator())  # every day x ticks
-    ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO))  # major x:Mondays
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d')) # x labels month/day
+    ax.xaxis.set_minor_locator(mdates.WeekdayLocator(byweekday=mdates.MO))  # every week x ticks
+    ax.xaxis.set_major_locator(mdates.MonthLocator())  # major x: the first of every month
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b 1')) # x labels month day
 
     plt.grid(which='major', axis='both')             # show both major axis
     plt.grid(which='minor', axis='y', ls='dotted')   # show y minor as dotted
