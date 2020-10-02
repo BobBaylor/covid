@@ -139,14 +139,19 @@ def plot_multi_countries(opts, df, countries):
              'C':'total cases',
              'D':'total deaths'}[opts['--multi']]
     norm_str = ' (% of pop)' if opts['--norm'] else ''
-    title = f'{y_col}{norm_str} in {", ".join(countries.split(","))}'
+    title = f'{y_col}{norm_str}'
 
     fig, ax = plt.subplots(figsize=(8, 5))          # 8 wide by 4 tall seems good
 
     # groupby is magic.   https://realpython.com/pandas-groupby/
     for key, grp in df4.groupby(['geoId']):
-        y_norm = grp.iloc[0]['popData2019'] * 1e-2 if opts['--norm'] else 1.0
-        ax.plot(grp['Date'], grp[y_col]/y_norm, label=key, linewidth=7)
+        if opts['--norm']:
+            y_norm = grp.iloc[0]['popData2019'] * 1e-2
+            y_str = f'{(grp.iloc[-1][y_col]/y_norm):0.3f} '
+        else:
+            y_str = f'{int(grp.iloc[-1][y_col]):8,} '
+            y_norm = 1.0
+        ax.plot(grp['Date'], grp[y_col]/y_norm, label=y_str+key, linewidth=7)
 
     ax.legend()                                     # show the legend
     if opts['--log']:
