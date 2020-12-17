@@ -40,7 +40,7 @@ USAGE_TEXT = """
   -m --multi <M>          Multi all on one plot. c=cases, d=deaths. lower case for new, upper for totals.
   -o --log                Use log Y scale
   -p --plot               Plot the data.
-  -t --threshold <T>      min case count [default: 10].
+  -t --threshold <T>      min case count [default: 2].
   -v --version            show the version.
     """
 DATA_FILE = 'req.csv'
@@ -232,11 +232,17 @@ def test(opts):
     # make plotable date and rename the cases and deaths for plotting
     # I do it before selecting by country to avoid the SettingWithCopy warning
     # which is pandas saying 'you're modifying a copy, not the actual dataset'
+
+    # WHO changed the data set! ggrrr
+    # new columns as of 2020-12-17
+    # dateRep,year_week,cases_weekly,deaths_weekly,countriesAndTerritories,geoId,countryterritoryCode,popData2019,continentExp,notification_rate_per_100000_population_14-days
     df['Date'] = pd.to_datetime(df.dateRep, format='%d/%m/%Y')
-    df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths'].cumsum()
-    df['total cases'] = df.groupby(['countriesAndTerritories'])['cases'].cumsum()
-    df['daily cases'] = df['cases'].rolling(window=7).sum().divide(7.0)
-    df['daily deaths'] = df['deaths'].rolling(window=7).sum().divide(7.0)
+    df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths_weekly'].cumsum()
+    df['total cases'] = df.groupby(['countriesAndTerritories'])['cases_weekly'].cumsum()
+    df['daily cases'] = df['cases_weekly'].divide(7.0)
+    df['daily deaths'] = df['deaths_weekly'].divide(7.0)
+    df['cases'] = df['cases_weekly'].divide(7.0)
+    df['deaths'] = df['deaths_weekly'].divide(7.0)
 
     max_date = df['Date'].max()
     print(f'Most recent date point is {max_date:%B %d, %Y at %H:%M %p}')
