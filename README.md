@@ -1,4 +1,6 @@
 # covid.py
+# The Data Set is no longer maintained 
+# This Script is obsolete
 ## What is this?
 A python script to display WHO daily data on covid19 using pandas.
 ## Why?
