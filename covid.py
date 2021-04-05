@@ -214,7 +214,7 @@ def test(opts):
 
     df = pd.read_csv(DATA_FILE, encoding='ISO-8859-1')
     f_date = datetime.fromtimestamp(os.path.getmtime(DATA_FILE))
-    print(f'Data was retrieved {f_date:%B %d, %Y at %H:%M %p}')
+    print(f'Data were retrieved {f_date:%B %d, %Y at %H:%M %p}')
 
     # clean the data a little. That cruise ship has the longest id strings in the whole df
     df.replace('Cases_on_an_international_conveyance_Japan',
@@ -236,13 +236,17 @@ def test(opts):
     # WHO changed the data set! ggrrr
     # new columns as of 2020-12-17
     # dateRep,year_week,cases_weekly,deaths_weekly,countriesAndTerritories,geoId,countryterritoryCode,popData2019,continentExp,notification_rate_per_100000_population_14-days
+    # and, again!
+    # dateRep,day,month,year,cases,deaths,countriesAndTerritories,geoId,countryterritoryCode,popData2019,continentExp,Cumulative_number_for_14_days_of_COVID-19_cases_per_100000
+    # 14/12/2020,14,12,2020,189723,1340,United_States_of_America,US,USA,329064917,America,873.21159186
+
     df['Date'] = pd.to_datetime(df.dateRep, format='%d/%m/%Y')
-    df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths_weekly'].cumsum()
-    df['total cases'] = df.groupby(['countriesAndTerritories'])['cases_weekly'].cumsum()
-    df['daily cases'] = df['cases_weekly'].divide(7.0)
-    df['daily deaths'] = df['deaths_weekly'].divide(7.0)
-    df['cases'] = df['cases_weekly'].divide(7.0)
-    df['deaths'] = df['deaths_weekly'].divide(7.0)
+    df['total deaths'] = df.groupby(['countriesAndTerritories'])['deaths'].cumsum()
+    df['total cases'] = df.groupby(['countriesAndTerritories'])['cases'].cumsum()
+    df['daily cases'] = df['cases'].rolling(window=7).mean()
+    df['daily deaths'] = df['deaths'].rolling(window=7).mean()
+    # df['cases'] = df['cases_weekly'].divide(7.0)
+    # df['deaths'] = df['deaths_weekly'].divide(7.0)
 
     max_date = df['Date'].max()
     print(f'Most recent date point is {max_date:%B %d, %Y at %H:%M %p}')
